@@ -5,7 +5,7 @@ A collection of machine learning techniques
 
 ### Data
 
-Datasets which are used in the demonstrations.
+Datasets which are used in the demonstrations. A number of datasets are taken from here: https://github.com/probml/pmtk3
 
 ### Notebooks
 
