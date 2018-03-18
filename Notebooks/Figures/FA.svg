@@ -16,13 +16,16 @@
    id="svg2"
    version="1.1"
    inkscape:version="0.48.4 r9939"
-   sodipodi:docname="New document 1">
+   sodipodi:docname="FA.svg"
+   inkscape:export-filename="/media/hdd/home/juvid/Dropbox/Projects/ML_demos/Notebooks/Figures/FA.png"
+   inkscape:export-xdpi="500"
+   inkscape:export-ydpi="500">
   <sodipodi:namedview
      id="base"
      pagecolor="#ffffff"
      bordercolor="#666666"
      borderopacity="1.0"
-     inkscape:pageopacity="0.0"
+     inkscape:pageopacity="1"
      inkscape:pageshadow="2"
      inkscape:zoom="0.98994949"
      inkscape:cx="281.90259"
@@ -32,7 +35,7 @@
      showgrid="false"
      inkscape:window-width="927"
      inkscape:window-height="1028"
-     inkscape:window-x="65"
+     inkscape:window-x="75"
      inkscape:window-y="24"
      inkscape:window-maximized="0"
      fit-margin-top="0"
