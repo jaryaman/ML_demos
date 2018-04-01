@@ -1,6 +1,6 @@
-% smiley.m
-% Take graphical input from the mouse, plot, and write to file
-% Code from 
+% data_from_mouse.m
+% MATLAB code to take graphical input from the mouse, plot, and write to file
+
 
 figure
 n = 100;
