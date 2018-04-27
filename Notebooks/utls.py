@@ -31,3 +31,12 @@ def multivariate_gaussian(pos, mu, Sigma):
     fac = np.einsum('...k,kl,...l->...', pos-mu, Sigma_inv, pos-mu)
 
     return np.exp(-fac / 2) / N
+
+def standardize(X):
+    """Z-transform an array
+    
+    param X: An N x D array where N is the number of examples and D is the number of features
+
+    returns: An N x D array where every column has been rescaled to 0 mean and unit variance
+    """
+    return (X - X.mean())/X.std(ddof=1)
