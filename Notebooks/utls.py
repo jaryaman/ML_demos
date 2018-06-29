@@ -3,15 +3,24 @@ import matplotlib as mpl
 import numpy as np
 
 def reset_plots():
-	plt.close('all')
-	fontsize = 20
-	plt.rc('font',**{'family':'sans-serif','sans-serif':['Helvetica']})
-	plt.rc('text', usetex=True)
-	font = {'size' : fontsize}
-	plt.rc('font', **font)
-	mpl.rc('lines', markersize=10)
-	plt.rcParams.update({'axes.labelsize': fontsize})
-	mpl.rcParams['text.latex.preamble'] = [r'\usepackage{amsmath}', r'\usepackage{amsfonts}']
+    plt.close('all')
+    fontsize = 20
+    legsize = 15
+    plt.rc('font',**{'family':'sans-serif','sans-serif':['Helvetica']})
+    plt.rc('text', usetex=True)
+    font = {'size' : fontsize}
+    plt.rc('font', **font)
+    rc={'axes.labelsize': fontsize, 
+    'font.size': fontsize, 
+    'axes.titlesize': fontsize, 
+    'xtick.labelsize':fontsize, 
+    'ytick.labelsize':fontsize,
+    'legend.fontsize': legsize}
+    mpl.rcParams.update(**rc)
+    mpl.rc('lines', markersize=10)
+    plt.rcParams.update({'axes.labelsize': fontsize})
+    mpl.rcParams['text.latex.preamble'] = [r'\usepackage{amsmath}'] 
+
 
 def multivariate_gaussian(pos, mu, Sigma):
     """Return the multivariate Gaussian distribution on array pos.
