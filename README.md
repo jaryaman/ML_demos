@@ -18,3 +18,4 @@ A set of Jupyter notebooks and helper modules providing demonstrations of some m
 - `independent_component_analysis.ipynb` : Exploration of latent linear models using independent component analysis in comparison to principal component analysis.
 - `L1_regularization_linear_models.ipynb` : Exploration of how to perform L1 regularization for linear regression, and a frequentist heuristic for choosing the regularization strength
 - `robust_linear_regression.ipynb` : Linear regression using t-distributed noise, using Bayesian inference and Pymc3
+- `kernel_machines.ipynb` : Using kernel machines to generate a simple non-linear classifier
