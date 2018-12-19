@@ -1,6 +1,8 @@
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 import numpy as np
+import matplotlib.ticker
+from matplotlib.ticker import FormatStrFormatter
 
 def reset_plots():
     plt.close('all')
@@ -10,17 +12,30 @@ def reset_plots():
     plt.rc('text', usetex=True)
     font = {'size' : fontsize}
     plt.rc('font', **font)
-    rc={'axes.labelsize': fontsize, 
-    'font.size': fontsize, 
-    'axes.titlesize': fontsize, 
-    'xtick.labelsize':fontsize, 
+    rc={'axes.labelsize': fontsize,
+    'font.size': fontsize,
+    'axes.titlesize': fontsize,
+    'xtick.labelsize':fontsize,
     'ytick.labelsize':fontsize,
     'legend.fontsize': legsize}
     mpl.rcParams.update(**rc)
     mpl.rc('lines', markersize=10)
     plt.rcParams.update({'axes.labelsize': fontsize})
-    mpl.rcParams['text.latex.preamble'] = [r'\usepackage{amsmath}'] 
+    mpl.rcParams['text.latex.preamble'] = [r'\usepackage{amsmath}']
 
+
+def remove_tex_axis(ax, xtick_fmt = '%d', ytick_fmt = '%d'):
+	"""
+	Makes axes normal font in matplotlib.
+	Params:
+	xtick_fmt : A string, defining the format of the x-axis
+	ytick_fmt : A string, defining the format of the y-axis
+	"""
+	fmt = matplotlib.ticker.StrMethodFormatter("{x}")
+	ax.xaxis.set_major_formatter(fmt)
+	ax.yaxis.set_major_formatter(fmt)
+	ax.xaxis.set_major_formatter(FormatStrFormatter(xtick_fmt))
+	ax.yaxis.set_major_formatter(FormatStrFormatter(ytick_fmt))
 
 def multivariate_gaussian(pos, mu, Sigma):
     """Return the multivariate Gaussian distribution on array pos.
@@ -43,7 +58,7 @@ def multivariate_gaussian(pos, mu, Sigma):
 
 def standardize(X):
     """Z-transform an array
-    
+
     param X: An N x D array where N is the number of examples and D is the number of features
 
     returns: An N x D array where every column has been rescaled to 0 mean and unit variance
