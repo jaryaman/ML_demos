@@ -25,4 +25,4 @@ A set of Jupyter notebooks and helper modules providing demonstrations of some m
 
 ### Rendering
 
-If GitHub fails to render the notbook, visit https://nbviewer.jupyter.org/ and paste in the URL you wish to view
+If GitHub fails to render the notebook, visit https://nbviewer.jupyter.org/ and paste in the URL you wish to view.
