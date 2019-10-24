@@ -23,8 +23,8 @@ double distance_metric(int *data, int *simulation){
 
 	Parameters
 	----------------
-	data : an array of length N_DATA, which is the data which we are using for
-		Bayesian inference
+	data : an array of length N_DATA, which is the data used for Bayesian
+		inference
 	simulation : an array of length N_DATA, which is a simulated dataset
 
 	Returns
@@ -48,7 +48,8 @@ double distance_metric(int *data, int *simulation){
 }
 
 double kernel_pdf(double theta_old, double theta_new){
-	/*The probability density of a perturbation kernel
+	/*The probability density of a new parameter given an old parameter under the
+	perturbation kernel
 
 	Parameters
 	----------------
@@ -57,7 +58,7 @@ double kernel_pdf(double theta_old, double theta_new){
 
 	Returns
 	----------------
-	Transition probability from theta_old to theta_new
+	Transition probability density from theta_old to theta_new
 
 	*/
 	return gsl_ran_gaussian_pdf(theta_new - theta_old, KERNEL_SD);
