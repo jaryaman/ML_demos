@@ -1,3 +1,4 @@
-particles.txt
+particles.csv
 *.ce
 *.o
+*.ipynb_checkpoint*
