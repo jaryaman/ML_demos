@@ -1,6 +1,7 @@
-Notebooks/.ipynb_checkpoints
+**/.ipynb_checkpoints
 Notebooks/utls.pyc
 **/.pyc
 **/__pycache__
 Sandbox
-**/particles.csv
+**/particle*.csv
+
