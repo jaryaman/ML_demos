@@ -1,14 +1,14 @@
-#define PRIOR_GRADIENT_LOWER 1.0
-#define PRIOR_INTERCEPT_LOWER 3.0
+#define PRIOR_GRADIENT_LOWER 0.0
+#define PRIOR_INTERCEPT_LOWER 0.0
 #define PRIOR_SIGMA_LOWER 0.0
 
-#define PRIOR_GRADIENT_UPPER 100.0
+#define PRIOR_GRADIENT_UPPER 10.0
 #define PRIOR_INTERCEPT_UPPER 500.0
-#define PRIOR_SIGMA_UPPER 100.0
+#define PRIOR_SIGMA_UPPER 10.0
 
-#define KERNEL_SD_GRADIENT 0.05
-#define KERNEL_SD_INTERCEPT 0.05
-#define KERNEL_SD_SIGMA 0.05
+#define KERNEL_SD_GRADIENT 0.1
+#define KERNEL_SD_INTERCEPT 10.0
+#define KERNEL_SD_SIGMA 0.1
 
 double unif_neg_pos(gsl_rng *r){
   /*Return a unif(-1,1)*/
@@ -143,9 +143,10 @@ void simulate_dataset(gsl_rng *r, double ***theta_particle, double *data_x,
 }
 
 
-double distance_metric_sum_stats(double *simulated_data, double *data_x,
+void distance_metric_sum_stats(double *simulated_data, double *data_x,
                        double gradient_fit_data, double intercept_fit_data,
-                       double sigma_fit_data){
+                       double sigma_fit_data, double **distance,
+                       int particle_index){
   /* Compute a distance metric between the data and the simulation as the sum
   of relative absolute distances between maximum-likelihood estimates of the
   three parameters of linear regression.
@@ -157,29 +158,35 @@ double distance_metric_sum_stats(double *simulated_data, double *data_x,
   gradient_fit_data : ML fit of the gradient to the data
   intercept_fit_data : ML fit of the intercept to the data
   sigma_fit_data : ML fit of the standard deviation to the data
+  distance : A 2d array of size (N_PARAMETERS X N_PARTICLES)
+            denoting a 3D distance metric
+  particle_index : An integer, the index of the particle
 
 
   Returns
   ----------------
-  distance metric between the data and the simulation
+  Augments distance metric for particle_index
 
   */
 
   double gradient_fit_sim, intercept_fit_sim, sigma_fit_sim, cov00, cov01, cov11, sumsq;
   int gsl_fit_return_value;
-  double distance_metric;
 
   gsl_fit_return_value = gsl_fit_linear(data_x, 1, simulated_data, 1, N_DATA,
                                         &intercept_fit_sim, &gradient_fit_sim,
                                          &cov00, &cov01, &cov11, &sumsq);
   if (gsl_fit_return_value != 0) {printf("Fit failed.\n"); exit(99);}
   sigma_fit_sim = sqrt(sumsq/(N_DATA-2));
-  distance_metric = fabs(gradient_fit_sim - gradient_fit_data)/gradient_fit_data +
-                   fabs(intercept_fit_sim - intercept_fit_data)/intercept_fit_data +
-                   fabs(sigma_fit_sim - sigma_fit_data)/sigma_fit_data;
-  if (distance_metric < 0) {printf("Negative distance!\n");  exit(99);}
+  distance[0][particle_index] =
+              fabs(gradient_fit_sim - gradient_fit_data);
+  distance[1][particle_index] =
+              fabs(intercept_fit_sim - intercept_fit_data);
+  distance[2][particle_index] =
+              fabs(sigma_fit_sim - sigma_fit_data);
+  if ((distance[0][particle_index] < 0)||
+      (distance[1][particle_index] < 0)||
+      (distance[2][particle_index] < 0)) {printf("Negative distance!\n");  exit(99);}
 
-  return distance_metric;
 }
 
 double distance_metric_sum_sq_res(double *simulated_data, double *data_y){
