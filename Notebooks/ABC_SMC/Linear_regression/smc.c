@@ -33,24 +33,33 @@ Author: Juvid Aryaman
 #define N_DATA 30
 #define N_PARAMETERS 3
 
-#define N_PARTICLES 2000
-#define N_ROUNDS_SMC 50
-#define QUANTILE_ACCEPT_DISTANCE 0.8
+#define N_PARTICLES 20000
 
 #define RND gsl_rng_uniform(r)
 #define SEED 1
-#define DISTANCE_THRESHOLD_INIT 50
 
 #define X_DATA_FILENAME "x.csv"
 #define Y_DATA_FILENAME "y.csv"
 
-//#define DEBUG_MODE
+// Global variables
+/*Define the distance threshold for every round of SMC*/
+double distance_threshold_schedule[] = {7.0, 6.375, 5.75, 5.125, 4.5, 3.875,
+	3.25, 2.625, 2.0};
+int N_ROUNDS_SMC = (int)(sizeof(distance_threshold_schedule) / sizeof(double));
+
 
 #include "smc.h"
 #include "lin_reg.h"
 
+//#define DEBUG_MODE
+
 int main(int argc, char *argv[]) {
 
+#ifndef DEBUG_MODE
+	printf("Threshold schedule:\n");
+	print_double_array(distance_threshold_schedule, N_ROUNDS_SMC);
+	printf("\n");
+#endif
 
 /* set up GSL RNG */
 gsl_rng *r = gsl_rng_alloc(gsl_rng_mt19937);
@@ -112,11 +121,15 @@ for (i = 0; i < N_PARAMETERS; i++){
 	}
 }
 
-double distance_threshold = DISTANCE_THRESHOLD_INIT;
 double *simulated_data = (double*) malloc(N_DATA * sizeof(double));
 double *distance = malloc(N_PARTICLES * sizeof(double));
-double *weight = malloc(N_PARTICLES * sizeof(double));
-double *distance_threshold_all = malloc(N_ROUNDS_SMC * sizeof(double));
+double **weight;
+weight = (double**) malloc(N_ROUNDS_SMC * sizeof(double*));
+for (i = 0; i < N_ROUNDS_SMC; i++) {
+	weight[i] = (double*) malloc(N_PARTICLES * sizeof(double));
+}
+
+
 double weight_normalizer = 0.0;
 
 int time_smc=0; // an index of each round of SMC
@@ -131,20 +144,20 @@ for (time_smc = 0; time_smc < N_ROUNDS_SMC; time_smc++) {
 	#ifndef DEBUG_MODE
 		printf("Round %d of SMC\n", time_smc);
 	#endif
-	distance_threshold_all[time_smc] = distance_threshold;
 
 	/*Draw or perturb a particle and compute distance*/
 	for (particle_index = 0; particle_index < N_PARTICLES; particle_index++) {
-		// printf("%d\n", particle_index);
-		distance[particle_index] = distance_threshold + 1.0; // reset distance of particle
-		while (distance[particle_index] > distance_threshold) {
+		// reset distance of particle
+		distance[particle_index] = distance_threshold_schedule[time_smc] + 1.0;
+
+		while (distance[particle_index] > distance_threshold_schedule[time_smc]) {
 			if (time_smc == 0) {
 				// Sample from the prior
 				sample_prior(r, theta_particle, particle_index);
 			}
 			else{
 				/*Sample from the old weights*/
-				param_index_chosen = weighted_choice(r, weight);
+				param_index_chosen = weighted_choice(r, weight[time_smc-1]);
 				if ((param_index_chosen < 0)||(param_index_chosen >= N_PARTICLES)) {
 					printf("Error in param_index_chosen\n");
 					printf("time_smc = %d\n", time_smc);
@@ -158,23 +171,12 @@ for (time_smc = 0; time_smc < N_ROUNDS_SMC; time_smc++) {
 				prior_violated = check_prior_violated(theta_particle, time_smc,
 																							particle_index);
 				if(prior_violated == 1) continue;
-				}
+			}
 
 			simulate_dataset(r, theta_particle, data_x, simulated_data, time_smc,
 											 particle_index);
 
-
-
-
-			// Compute distance between data and simulation
-			// distance[particle_index] = distance_metric_sum_stats(simulated_data,
-			// 																					 data_x,
-			// 																					 gradient_fit_data,
-			// 																					 intercept_fit_data,
-			// 																					 sigma_fit_data);
-			//distance[particle_index] = distance_metric_sum_res(simulated_data, data_y);
 			distance[particle_index] = distance_metric_sum_abs_res(simulated_data, data_y);
-
 		}
 	}
 
@@ -183,31 +185,28 @@ for (time_smc = 0; time_smc < N_ROUNDS_SMC; time_smc++) {
 	#endif
 
 
-	/*Compute weights*/
-	if (time_smc==0){ for (i = 0; i < N_PARTICLES; i++) weight[i] = 1.0;}
+
+	/*Compute & Normalise weights. For uniform priors, and a uniform perturbation
+	kernel, all surviving particles are weighted identically as 1/N_PARTICLES.
+	Whilst seemingly inefficient, I keep this code here for clarity/generality.
+	The bottleneck in computation time is the while loop above.*/
+	if (time_smc==0){ for (i = 0; i < N_PARTICLES; i++) weight[0][i] = 1.0;}
 	else{
 		weight_normalizer = 0.0;
 		for (particle_index = 0; particle_index < N_PARTICLES; particle_index++) {
-			weight_normalizer +=  weight[particle_index]*kernel_pdf();
+			// kernel_pdf is uniform, so is independent of the parameters
+			weight_normalizer +=  weight[time_smc-1][particle_index]*kernel_pdf();
 		}
-		// print_double_array(weight, N_PARTICLES);
-		// printf("\n" );
-		// printf("weight_normalizer=%f\n", weight_normalizer);
-		// printf("kernel_pdf()=%f\n", kernel_pdf());
 		for (particle_index = 0; particle_index < N_PARTICLES; particle_index++) {
-			weight[particle_index] = prior_pdf(theta_particle, time_smc,
+			weight[time_smc][particle_index] = prior_pdf(theta_particle, time_smc,
 																				 particle_index)/weight_normalizer;
 		}
-
 	}
-
-	/*Normalise weights*/
 	weight_normalizer = 0.0;
-	for (i = 0; i < N_PARTICLES; i++)	weight_normalizer += weight[i];
-	for (i = 0; i < N_PARTICLES; i++)	weight[i] = weight[i]/weight_normalizer;
-
-	/* Resample weights*/
-	distance_threshold = update_distance_threshold(distance);
+	for (i = 0; i < N_PARTICLES; i++)	weight_normalizer += weight[time_smc][i];
+	for (i = 0; i < N_PARTICLES; i++){
+		weight[time_smc][i] = weight[time_smc][i]/weight_normalizer;
+	}
 
 
 }
@@ -217,8 +216,9 @@ for (time_smc = 0; time_smc < N_ROUNDS_SMC; time_smc++) {
 #endif
 	write_particles_to_csv(theta_particle);
 
-	char *dist_filename = "distances.txt";
-	write_double_array_to_csv(distance_threshold_all, N_ROUNDS_SMC, dist_filename);
+char weight_filename[] = "weights.csv";
+write_2d_double_array_to_csv(weight, N_ROUNDS_SMC, N_PARTICLES, weight_filename);
+
 #ifndef DEBUG_MODE
 	printf("Done!\n");
 #endif
