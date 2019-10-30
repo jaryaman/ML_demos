@@ -89,19 +89,3 @@ void write_double_array_to_csv(double *arr, int N_ELEMENTS, char *filename){
 	}
 	fclose(outfile_pointer);
 }
-
-void write_2d_double_array_to_csv(double **arr, int N_ROWS, int N_COLS, char *filename){
-	/*Write a 2D double array of length N_ELEMENTS to file*/
-
-	FILE *outfile_pointer;
-	int i, j;
-
-	outfile_pointer = fopen(filename, "w");
-	for (i = 0; i < N_ROWS; i++) {
-		for (j = 0; j < N_COLS; j++) {
-			if (j < N_COLS-1) fprintf(outfile_pointer,"%.8f,", arr[i][j]);
-			else fprintf(outfile_pointer,"%.8f\n", arr[i][j]);
-		}
-	}
-	fclose(outfile_pointer);
-}

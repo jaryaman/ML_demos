@@ -34,14 +34,12 @@ Author: Juvid Aryaman
 #define N_PARAMETERS 3
 
 #define N_PARTICLES 2000
-#define N_ROUNDS_SMC 25
+#define N_ROUNDS_SMC 50
 #define QUANTILE_ACCEPT_DISTANCE 0.8
 
 #define RND gsl_rng_uniform(r)
 #define SEED 1
-#define DISTANCE_THRESHOLD_INIT_GRADIENT 50
-#define DISTANCE_THRESHOLD_INIT_INTERCEPT 50
-#define DISTANCE_THRESHOLD_INIT_SIGMA 50
+#define DISTANCE_THRESHOLD_INIT 50
 
 #define X_DATA_FILENAME "x.csv"
 #define Y_DATA_FILENAME "y.csv"
@@ -52,6 +50,7 @@ Author: Juvid Aryaman
 #include "lin_reg.h"
 
 int main(int argc, char *argv[]) {
+
 
 /* set up GSL RNG */
 gsl_rng *r = gsl_rng_alloc(gsl_rng_mt19937);
@@ -113,23 +112,11 @@ for (i = 0; i < N_PARAMETERS; i++){
 	}
 }
 
-double** distance;
-distance = (double**) malloc(N_PARAMETERS * sizeof(double*));
-for (i = 0; i < N_PARAMETERS; i++) {
-	distance[i] = (double*) malloc(N_PARTICLES * sizeof(double));
-}
-double **distance_threshold_all = malloc(N_PARAMETERS * sizeof(double*));
-for (i = 0; i < N_PARAMETERS; i++) {
-	distance_threshold_all[i] = (double*) malloc(N_ROUNDS_SMC * sizeof(double));
-}
-
-double distance_threshold[] = {DISTANCE_THRESHOLD_INIT_GRADIENT,
-															 DISTANCE_THRESHOLD_INIT_INTERCEPT,
-														   DISTANCE_THRESHOLD_INIT_SIGMA};
-
+double distance_threshold = DISTANCE_THRESHOLD_INIT;
 double *simulated_data = (double*) malloc(N_DATA * sizeof(double));
+double *distance = malloc(N_PARTICLES * sizeof(double));
 double *weight = malloc(N_PARTICLES * sizeof(double));
-
+double *distance_threshold_all = malloc(N_ROUNDS_SMC * sizeof(double));
 double weight_normalizer = 0.0;
 
 int time_smc=0; // an index of each round of SMC
@@ -144,20 +131,13 @@ for (time_smc = 0; time_smc < N_ROUNDS_SMC; time_smc++) {
 	#ifndef DEBUG_MODE
 		printf("Round %d of SMC\n", time_smc);
 	#endif
-	for (i = 0; i < N_PARAMETERS; i++) {
-		distance_threshold_all[i][time_smc] = distance_threshold[i];
-	}
+	distance_threshold_all[time_smc] = distance_threshold;
 
 	/*Draw or perturb a particle and compute distance*/
 	for (particle_index = 0; particle_index < N_PARTICLES; particle_index++) {
 		// printf("%d\n", particle_index);
-		for (i = 0; i < N_PARAMETERS; i++) {
-			// reset distance of particle along each dimension
-			distance[i][particle_index] = distance_threshold[i] + 1.0;
-		}
-		while ((distance[0][particle_index] > distance_threshold[0])||
-					 (distance[1][particle_index] > distance_threshold[1])||
-				   (distance[2][particle_index] > distance_threshold[2])) {
+		distance[particle_index] = distance_threshold + 1.0; // reset distance of particle
+		while (distance[particle_index] > distance_threshold) {
 			if (time_smc == 0) {
 				// Sample from the prior
 				sample_prior(r, theta_particle, particle_index);
@@ -187,14 +167,13 @@ for (time_smc = 0; time_smc < N_ROUNDS_SMC; time_smc++) {
 
 
 			// Compute distance between data and simulation
-			distance_metric_sum_stats(simulated_data,
-															 data_x,
-															 gradient_fit_data,
-															 intercept_fit_data,
-															 sigma_fit_data,
-														   distance, particle_index);
+			// distance[particle_index] = distance_metric_sum_stats(simulated_data,
+			// 																					 data_x,
+			// 																					 gradient_fit_data,
+			// 																					 intercept_fit_data,
+			// 																					 sigma_fit_data);
 			//distance[particle_index] = distance_metric_sum_res(simulated_data, data_y);
-			// distance[particle_index] = distance_metric_sum_abs_res(simulated_data, data_y);
+			distance[particle_index] = distance_metric_sum_abs_res(simulated_data, data_y);
 
 		}
 	}
@@ -228,9 +207,7 @@ for (time_smc = 0; time_smc < N_ROUNDS_SMC; time_smc++) {
 	for (i = 0; i < N_PARTICLES; i++)	weight[i] = weight[i]/weight_normalizer;
 
 	/* Resample weights*/
-	distance_threshold[0] = update_distance_threshold(distance[0]);
-	distance_threshold[1] = update_distance_threshold(distance[1]);
-	distance_threshold[2] = update_distance_threshold(distance[2]);
+	distance_threshold = update_distance_threshold(distance);
 
 
 }
@@ -241,7 +218,7 @@ for (time_smc = 0; time_smc < N_ROUNDS_SMC; time_smc++) {
 	write_particles_to_csv(theta_particle);
 
 	char *dist_filename = "distances.txt";
-	write_2d_double_array_to_csv(distance_threshold_all, N_PARAMETERS, N_ROUNDS_SMC, dist_filename);
+	write_double_array_to_csv(distance_threshold_all, N_ROUNDS_SMC, dist_filename);
 #ifndef DEBUG_MODE
 	printf("Done!\n");
 #endif
