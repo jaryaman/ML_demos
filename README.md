@@ -1,6 +1,17 @@
 # ML_demos
 A collection of machine learning techniques
 
+## Installation
+
+Set up a [virtual environment](https://packaging.python.org/guides/installing-using-pip-and-virtual-environments/).
+
+To install requirements
+```bash
+pip install -U -r requirements.txt
+```
+
+Some notebooks require `mystyle`, see https://github.com/jaryaman/mystyle
+
 ## Directories
 
 ### Data
