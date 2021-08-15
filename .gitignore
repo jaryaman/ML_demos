@@ -12,3 +12,4 @@ systyle
 causality
 Notebooks/data
 venv
+**/build
